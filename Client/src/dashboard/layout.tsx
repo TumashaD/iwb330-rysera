@@ -8,7 +8,7 @@ export default function DashboardLayout() {
       <Header />
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="mx-auto py-8 mx-3.5">
         <Outlet />
       </div>
     </div>
