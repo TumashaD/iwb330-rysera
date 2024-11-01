@@ -3,7 +3,8 @@ import { EstimateResponse, UploadResponse } from "../types";
 
 export const uploadFile = async (
   file: File,
-  p0: (progress: any) => void
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  _p0: (progress: any) => void
 ): Promise<UploadResponse> => {
   const formData = new FormData();
   formData.append("file", file);
