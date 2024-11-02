@@ -58,10 +58,12 @@ public isolated class ZohoQuotationService {
     private isolated function getOrCreateContact(string contactName) returns string|error {
         http:Response response;
         json responseJson;
+        log:printInfo("Searching for contact: " + contactName);
+        log:printInfo("Organization ID: " + self.organizationId);
         lock {
             // First try to get existing contact
             response = check self.zohoClient->get(
-                string `/books/v3/contacts?organization_id=${self.organizationId}`,
+                string `/books/v3/contacts?organization_id=${self.organizationId}&contact_name=${contactName}`,
                 headers = {"Authorization": string `Zoho-oauthtoken ${self.accessToken}`}
             );
         }

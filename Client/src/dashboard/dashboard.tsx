@@ -18,10 +18,10 @@ import { useFileUpload } from "./hooks/useFileUpload";
 import STLViewer from "./components/STLViewer";
 import Estimator from "./components/estimator";
 import PriceSummary from "./components/priceSummary";
-import { Material, EstimatedValue, FileState } from "../types";
+import { Material, FileState } from "../types";
 
 // Import material images
-import PLA from "../assets/PLA.png";
+import PLA from "../assets/pla.png";
 import ABS from "../assets/ABS.webp";
 import PETG from "../assets/PETG.webp";
 import TPU from "../assets/TPU.png";
@@ -68,9 +68,7 @@ export default function Dashboard() {
   const { estimatedValues, setEstimatedValues } = UseUser();
   const [loadTimes, setLoadTimes] = useState<string[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
-  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
-    null
-  );
+  const [, setSelectedMaterial] = useState<Material | null>(null);
   const [globalSettings, setGlobalSettings] =
     useState<Omit<FileState, "file" | "status" | "uploadProgress">>(
       defaultSettings
@@ -215,6 +213,7 @@ export default function Dashboard() {
 
   const handleSettingsChange = (
     type: "material" | "infill" | "quality" | "color",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any,
     fileIndex?: number
   ) => {

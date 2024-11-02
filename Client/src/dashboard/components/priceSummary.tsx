@@ -89,12 +89,12 @@ const PriceSummary = ({ fileStates, estimatedValues }: PriceSummaryProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="w-[270px]">
       <Card className="flex flex-col flex-grow">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Price Summary</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col flex-grow">
+        <CardContent className="flex flex-col flex-grow px-4">
           <ScrollArea className="flex-grow pr-4">
             {fileStates.map((fileState, index) => (
               <div

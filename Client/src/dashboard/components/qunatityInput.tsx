@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import React, { useState } from "react";
+import { Minus, Plus } from "lucide-react";
 
 interface QuantityInputProps {
   value?: number;
@@ -9,15 +9,15 @@ interface QuantityInputProps {
   disabled?: boolean;
 }
 
-const QuantityInput: React.FC<QuantityInputProps> = ({ 
-  value = 1, 
-  onChange, 
-  min = 1, 
+const QuantityInput: React.FC<QuantityInputProps> = ({
+  value = 1,
+  onChange,
+  min = 1,
   max = 99,
-  disabled = false 
+  disabled = false,
 }) => {
-  const [focused, setFocused] = useState(false);
-  
+  const [, setFocused] = useState(false);
+
   const handleIncrement = () => {
     if (value < max) {
       onChange(value + 1);
@@ -38,13 +38,14 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
   };
 
   return (
-    <div className={`
+    <div
+      className={`
       flex flex-row items-center
-      ${disabled ? 'opacity-50' : ''}
+      ${disabled ? "opacity-50" : ""}
       bg-white
-    `}>
-
-<button
+    `}
+    >
+      <button
         type="button"
         onClick={handleDecrement}
         disabled={disabled || value <= min}
@@ -57,7 +58,7 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
       >
         <Minus size={12} />
       </button>
-      
+
       <input
         type="number"
         min={min}
@@ -76,7 +77,7 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
         `}
       />
 
-<button
+      <button
         type="button"
         onClick={handleIncrement}
         disabled={disabled || value >= max}
@@ -89,9 +90,6 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
       >
         <Plus size={12} />
       </button>
-      
-
-
     </div>
   );
 };
