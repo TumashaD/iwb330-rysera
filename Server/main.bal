@@ -29,7 +29,6 @@ public type orderData record {|
     decimal[] prices;
 |};
 
-configurable string[] validApiKeys = ?; //valid api keys
 configurable string mongoDBConnectionString = ?; //mongodb connection string
 configurable string estimatorApiKey = ?;
 configurable string OAuthRefreshToken = ?;
@@ -57,55 +56,12 @@ http:CorsConfig corsConfig = {
     maxAge: 3600
 };
 
-// Define the request interceptor class
-service class RequestInterceptor {
-    *http:RequestInterceptor;
-
-    isolated resource function 'default [string... path](
-            http:RequestContext ctx,
-            http:Request req,
-            @http:Header {name: "X-Api-Key"} string|() apiKey)
-        returns http:Unauthorized|http:NextService|error? {
-
-        if req.method == http:OPTIONS {
-            return ctx.next();
-        }
-
-        // Check if API key exists
-        if apiKey is () {
-            return <http:Unauthorized>{
-                body: "Missing API Key"
-            };
-        }
-
-        // Check if API key is valid
-        boolean isValidKey = false;
-        foreach string validKey in validApiKeys {
-            if apiKey == validKey {
-                log:printInfo("Authentication successful for key: " + apiKey);
-                isValidKey = true;
-                break;
-            }
-        }
-        if !isValidKey {
-            return <http:Unauthorized>{
-                body: "Invalid API Key"
-            };
-        }
-
-        return ctx.next();
-    }
-}
 
 @http:ServiceConfig {
     cors: corsConfig
 }
 
-service http:InterceptableService / on new http:Listener(9090) {
-
-    public function createInterceptors() returns RequestInterceptor {
-        return new RequestInterceptor();
-    }
+service / on new http:Listener(9090) {
 
     // Define a simple GET resource to return a greeting
     resource function get greeting(http:RequestContext ctx) returns string {
@@ -281,22 +237,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             return error("Quotation generation failed: " + quotation.toString());
         }
 
-        // upload the quotation to google drive
-        // if quotation is byte[] {
-        //     drive:File|error uploadedFileResult = googleDriveService.uploadFile(quotation, string `${customer}.pdf`, "1wKktZ0kuX4vF5yBa56eUvfqGMxqQ4nzS");
-        //     if uploadedFileResult is drive:File {
-        //         string fileID = uploadedFileResult.id.toString();
-        //         string url = string `https://drive.usercontent.google.com/download?id=${fileID}&confirm=xxx`;
-        //         json response = {
-        //             "url": url
-        //         };
-        //         return response;
-        //     } else {
-        //         return error("Quotation upload failed: " + uploadedFileResult.toString());
-        //     }
-        // } else {
-        //     return error("Quotation generation failed: " + quotation.toString());
-        // }
+        
     }
 
     resource function post sendToSheet(http:Request req) returns error? {

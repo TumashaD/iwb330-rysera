@@ -13,9 +13,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Add x-api-key header
-    const apiKey = import.meta.env.VITE_MIDDLEWARE_API_KEY; // Assuming the API key is stored in environment variables
-    if (apiKey) {
-      config.headers["X-Api-Key"] = apiKey;
+    const accessToken = import.meta.env.VITE_MIDDLEWARE_ACCESS_TOKEN; // Assuming the API key is stored in environment variables
+    if (accessToken) {
+      config.headers["Authorization"] = `Bearer ${accessToken}`;
     }
     // Add this line to log the headers
     return config;
