@@ -1,8 +1,8 @@
 import ballerina/regex;
 
-type Vector [float, float, float];
+public type Vector [float, float, float];
 
-public isolated class VolumeCalculator {
+public isolated class WeightCalculator {
 
     // Binary detection function
     private isolated function isBinarySTL(byte[] stlContent) returns boolean {
@@ -25,7 +25,7 @@ public isolated class VolumeCalculator {
     }
 
     // Parse the ASCII STL format
-    isolated function parseASCIISTL(byte[] stlContent) returns float|error {
+    isolated function parseASCIISTL(byte[] stlContent) returns Vector[][]|error {
         // First convert just the content we need to process
         string|error stlText = string:fromBytes(stlContent);
         if stlText is error {
@@ -70,11 +70,11 @@ public isolated class VolumeCalculator {
             return error("No valid triangles found in the ASCII STL file");
         }
 
-        return self.volumeOfMesh(triangles);
+        return triangles;
     }
 
     // Parse the Binary STL format
-    isolated function parseBinarySTL(byte[] stlContent) returns float|error {
+    isolated function parseBinarySTL(byte[] stlContent) returns Vector[][]|error {
         if stlContent.length() < 84 {  // Minimum size for a valid binary STL
             return error("Invalid binary STL: file too small");
         }
@@ -121,7 +121,7 @@ public isolated class VolumeCalculator {
             triangles.push([p1, p2, p3]);
         }
 
-        return self.volumeOfMesh(triangles);
+        return triangles;
     }
 
     // Helper function to read an unsigned 32-bit integer from a byte array
@@ -178,15 +178,6 @@ public isolated class VolumeCalculator {
         return sign == 0 ? result : -result;
     }
 
-    // Main entry point for parsing STL files
-    public isolated function parseSTL(byte[] stlContent) returns float|error {
-        if self.isBinarySTL(stlContent) {
-            return self.parseBinarySTL(stlContent);
-        } else {
-            return self.parseASCIISTL(stlContent);
-        }
-    }
-
     // Volume calculation functions
     isolated function signedVolumeOfTriangle(Vector p1, Vector p2, Vector p3) returns float {
         float v321 = p3[0] * p2[1] * p1[2];
@@ -199,7 +190,7 @@ public isolated class VolumeCalculator {
         return (1.0 / 6.0) * (-v321 + v231 + v312 - v132 - v213 + v123);
     }
 
-    public isolated function volumeOfMesh(Vector[][] triangles) returns float {
+    isolated function volumeOfMesh(Vector[][] triangles) returns float {
         float totalVolume = 0;
 
         foreach var triangle in triangles {
@@ -210,6 +201,21 @@ public isolated class VolumeCalculator {
         }
 
         // Total volume of the mesh, no need for abs() as the sum of signed volumes gives the correct result.
-        return totalVolume;
+        return totalVolume / 1000;
+    }
+
+    // Main entry point for parsing STL files
+    public isolated function getSTLdata(byte[] stlContent) returns record {|Vector[][] triangles; float volume;|}|error {
+        Vector[][] triangles;
+        if self.isBinarySTL(stlContent) {
+            triangles = check self.parseBinarySTL(stlContent);
+        } else {
+            triangles = check self.parseASCIISTL(stlContent);
+        }
+        return {triangles: triangles, volume: self.volumeOfMesh(triangles)};
+    }
+
+    public function estimateWeight(float volume, float density) returns float {
+        return volume * density;
     }
 }

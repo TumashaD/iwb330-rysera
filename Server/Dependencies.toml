@@ -5,7 +5,7 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.10.1"
+distribution-version = "2201.10.0"
 
 [[package]]
 org = "Rysera"
@@ -26,12 +26,11 @@ dependencies = [
 modules = [
 	{org = "Rysera", packageName = "Server", moduleName = "Server"},
 	{org = "Rysera", packageName = "Server", moduleName = "Server.db"},
-	{org = "Rysera", packageName = "Server", moduleName = "Server.estimator"},
 	{org = "Rysera", packageName = "Server", moduleName = "Server.google_drive"},
 	{org = "Rysera", packageName = "Server", moduleName = "Server.google_sheets"},
+	{org = "Rysera", packageName = "Server", moduleName = "Server.price_estimator"},
 	{org = "Rysera", packageName = "Server", moduleName = "Server.quotation_generator"},
-	{org = "Rysera", packageName = "Server", moduleName = "Server.utils"},
-	{org = "Rysera", packageName = "Server", moduleName = "Server.volume_calculator"}
+	{org = "Rysera", packageName = "Server", moduleName = "Server.utils"}
 ]
 
 [[package]]
@@ -88,7 +87,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "http"
-version = "2.12.2"
+version = "2.12.4"
 dependencies = [
 	{org = "ballerina", name = "auth"},
 	{org = "ballerina", name = "cache"},
@@ -120,7 +119,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "io"
-version = "1.6.1"
+version = "1.6.3"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.value"}

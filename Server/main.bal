@@ -1,18 +1,13 @@
 import Server.db;
-import Server.estimator;
 import Server.google_drive;
 import Server.google_sheets;
 import Server.quotation_generator;
 import Server.utils;
-import Server.volume_calculator;
-
+import Server.price_estimator;
 import ballerina/http;
 import ballerina/log;
 import ballerina/mime;
-import ballerinax/googleapis.drive;
-
-// Define the list of valid API keys
-type Vector [float, float, float];
+// import ballerinax/googleapis.drive;
 
 public type Product record {
     string name;
@@ -41,9 +36,9 @@ configurable string ZohoorganizationId = ?;
 
 //define mongoDB database
 final db:Database db = check new (mongoDBConnectionString);
-final estimator:estimatorService estimator = check new (estimatorApiKey);
 final google_drive:driverService googleDriveService = check new (OAuthRefreshToken, OAuthClientId, OAuthClientSecret);
-final volume_calculator:VolumeCalculator volume_calculator = new ();
+final price_estimator:WeightCalculator weight_calculator = new ();
+final price_estimator:PrintTimeEstimator time_estimator = new ();
 final utils:googleService googleService = check new ();
 final quotation_generator:ZohoQuotationService quotation_generator = check new (ZohoclientID, ZohoclientSecret, ZohorefreshToken, ZohoorganizationId);
 final google_sheets:sheetsService sheetsService = check new (OAuthRefreshToken, OAuthClientId, OAuthClientSecret);
@@ -104,47 +99,47 @@ service / on new http:Listener(9090) {
         }
     }
 
-    resource function post upload(http:Request request) returns json|error {
-        log:printInfo("File upload request received");
-        // Extract the file from multipart request
-        mime:Entity[] bodyParts = check request.getBodyParts();
-        foreach var part in bodyParts {
-            if part.getContentDisposition().name == "file" {
-                // Get file details
-                string fileName = part.getContentDisposition().fileName;
-                if fileName == "" {
-                    fileName = "uploaded-file";
-                }
-                byte[] fileContent = check part.getByteArray();
+    // resource function post upload(http:Request request) returns json|error {
+    //     log:printInfo("File upload request received");
+    //     // Extract the file from multipart request
+    //     mime:Entity[] bodyParts = check request.getBodyParts();
+    //     foreach var part in bodyParts {
+    //         if part.getContentDisposition().name == "file" {
+    //             // Get file details
+    //             string fileName = part.getContentDisposition().fileName;
+    //             if fileName == "" {
+    //                 fileName = "uploaded-file";
+    //             }
+    //             byte[] fileContent = check part.getByteArray();
 
-                // Upload the file to Google Drive
-                drive:File|error uploadedFileResult = googleDriveService.uploadFile(fileContent, fileName, "1-DDCsqJJRTkBOvzDvTX-qHhYOI-Bpf6n");
+    //             // Upload the file to Google Drive
+    //             drive:File|error uploadedFileResult = googleDriveService.uploadFile(fileContent, fileName, "1-DDCsqJJRTkBOvzDvTX-qHhYOI-Bpf6n");
 
-                // Calculate the volume of the file
-                float|error volume = volume_calculator.parseSTL(fileContent);
+    //             // Calculate the volume of the file
+    //             float|error volume = volume_calculator.parseSTL(fileContent);
 
-                if uploadedFileResult is drive:File {
-                    if volume is float {
-                        log:printInfo("Volume calculated successfully: " + volume.toString());
-                        string fileID = uploadedFileResult.id.toString();
-                        string url = string `https://drive.usercontent.google.com/download?id=${fileID}&confirm=xxx`;
-                        json response = {
-                            "url": url,
-                            "volume": volume
-                        };
-                        return response;
-                    } else {
-                        return error("Volume calculation failed: " + volume.toString());
-                    }
-                } else {
-                    return error("File upload failed: " + uploadedFileResult.toString());
-                }
+    //             if uploadedFileResult is drive:File {
+    //                 if volume is float {
+    //                     log:printInfo("Volume calculated successfully: " + volume.toString());
+    //                     string fileID = uploadedFileResult.id.toString();
+    //                     string url = string `https://drive.usercontent.google.com/download?id=${fileID}&confirm=xxx`;
+    //                     json response = {
+    //                         "url": url,
+    //                         "volume": volume
+    //                     };
+    //                     return response;
+    //                 } else {
+    //                     return error("Volume calculation failed: " + volume.toString());
+    //                 }
+    //             } else {
+    //                 return error("File upload failed: " + uploadedFileResult.toString());
+    //             }
 
-            }
-        }
+    //         }
+    //     }
 
-        return error("No file found in the request");
-    }
+    //     return error("No file found in the request");
+    // }
 
     resource function post setOrders(@http:Query string jwt, db:Order[] newOrders) returns json|http:Unauthorized|error {
         json|http:Unauthorized|error result = googleService.decodeGoogleJWT(jwt);
@@ -172,38 +167,76 @@ service / on new http:Listener(9090) {
         }
     }
 
-    resource function post estimate(@http:Payload json jsonObj) returns json|error {
-        string url = check jsonObj.url;
-        float weight = check jsonObj.weight;
-        json|error result = estimator.estimate(url);
-        string time;
+        resource function post estimate(http:Request request) returns json|error {
+        log:printInfo("Price estimate request received");
+        // Extract the file from multipart request
+        mime:Entity[] bodyParts = check request.getBodyParts();
+        foreach var part in bodyParts {
+            if part.getContentDisposition().name == "file" {
+                // Get file details
+                string fileName = part.getContentDisposition().fileName;
+                if fileName == "" {
+                    fileName = "uploaded-file";
+                }
+                byte[] fileContent = check part.getByteArray();
 
-        if result is json {
-            float price = check result.data.price;
-            float lkrPrice = price * 300;
-            float finalPrice = (lkrPrice < 2000.0)
-                ? 24124 - 53.5 * lkrPrice + 0.0386 * lkrPrice * lkrPrice - 8.82e-6 * lkrPrice * lkrPrice * lkrPrice
-                : 12151 - 10.6 * lkrPrice + 3.29e-3 * lkrPrice * lkrPrice - 2.88e-7 * lkrPrice * lkrPrice * lkrPrice;
-            int printingCost = <int>(finalPrice / 3.5 - 6 * weight);
-            if (printingCost < 0) {
-                weight = weight / 1.5;
+                // Upload the file to Google Drive
+                // drive:File|error uploadedFileResult = googleDriveService.uploadFile(fileContent, fileName, "1-DDCsqJJRTkBOvzDvTX-qHhYOI-Bpf6n");
+                // Get STL Data
+                record {|price_estimator:Vector[][] triangles; float volume;|} result = check weight_calculator.getSTLdata(fileContent);
+
+                // Calculate the print time of the file
+                float|error printTime = time_estimator.estimatePrintTime(result.triangles);
+                
+
+                if (printTime is float) {
+                    json response = {
+                        "weight": result.volume*1.24,
+                        "printTime": printTime / 60
+                    };
+                    return response;
+                } else {
+                    return error("Weight calculation failed: ");
+                
             }
-            int totalminutes = <int>((finalPrice / 3.5 - 6 * weight) / 0.69);
-            if (totalminutes < 0) {
-                time = "0";
-            }
-            else {
-                time = string `${totalminutes / 60} hr ${totalminutes % 60} m`;
-            }
-            json response = {
-                "price": finalPrice.round(2),
-                "time": time
-            };
-            return response;
-        } else {
-            return error("Estimation failed: " + result.toString());
         }
+
+        return error("No file found in the request");
     }
+        }
+
+    // resource function post estimate(@http:Payload json jsonObj) returns json|error {
+    //     string url = check jsonObj.url;
+    //     float weight = check jsonObj.weight;
+    //     json|error result = estimator.estimate(url);
+    //     string time;
+
+    //     if result is json {
+    //         float price = check result.data.price;
+    //         float lkrPrice = price * 300;
+    //         float finalPrice = (lkrPrice < 2000.0)
+    //             ? 24124 - 53.5 * lkrPrice + 0.0386 * lkrPrice * lkrPrice - 8.82e-6 * lkrPrice * lkrPrice * lkrPrice
+    //             : 12151 - 10.6 * lkrPrice + 3.29e-3 * lkrPrice * lkrPrice - 2.88e-7 * lkrPrice * lkrPrice * lkrPrice;
+    //         int printingCost = <int>(finalPrice / 3.5 - 6 * weight);
+    //         if (printingCost < 0) {
+    //             weight = weight / 1.5;
+    //         }
+    //         int totalminutes = <int>((finalPrice / 3.5 - 6 * weight) / 0.69);
+    //         if (totalminutes < 0) {
+    //             time = "0";
+    //         }
+    //         else {
+    //             time = string `${totalminutes / 60} hr ${totalminutes % 60} m`;
+    //         }
+    //         json response = {
+    //             "price": finalPrice.round(2),
+    //             "time": time
+    //         };
+    //         return response;
+    //     } else {
+    //         return error("Estimation failed: " + result.toString());
+    //     }
+    // }
 
     resource function post quote(@http:Payload json payload) returns json|error {
         // Convert the payload to a map<json> for easier key checking
