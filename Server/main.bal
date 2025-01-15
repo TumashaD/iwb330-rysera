@@ -1,12 +1,17 @@
 import Server.db;
 import Server.google_drive;
 import Server.google_sheets;
+import Server.price_estimator;
 import Server.quotation_generator;
 import Server.utils;
-import Server.price_estimator;
+
 import ballerina/http;
+import ballerina/io;
 import ballerina/log;
 import ballerina/mime;
+import ballerina/os;
+import ballerina/regex;
+
 // import ballerinax/googleapis.drive;
 
 public type Product record {
@@ -50,7 +55,6 @@ http:CorsConfig corsConfig = {
     allowMethods: ["GET", "POST", "OPTIONS"],
     maxAge: 3600
 };
-
 
 @http:ServiceConfig {
     cors: corsConfig
@@ -167,7 +171,7 @@ service / on new http:Listener(9090) {
         }
     }
 
-        resource function post estimate(http:Request request) returns json|error {
+    resource function post estimate(http:Request request) returns json|error {
         log:printInfo("Price estimate request received");
         // Extract the file from multipart request
         mime:Entity[] bodyParts = check request.getBodyParts();
@@ -183,27 +187,43 @@ service / on new http:Listener(9090) {
                 // Upload the file to Google Drive
                 // drive:File|error uploadedFileResult = googleDriveService.uploadFile(fileContent, fileName, "1-DDCsqJJRTkBOvzDvTX-qHhYOI-Bpf6n");
                 // Get STL Data
+                log:printInfo("Getting STL data");
                 record {|price_estimator:Vector[][] triangles; float volume;|} result = check weight_calculator.getSTLdata(fileContent);
 
                 // Calculate the print time of the file
+                log:printInfo("Estimating print time");
                 float|error printTime = time_estimator.estimatePrintTime(result.triangles);
-                
+                float weight = result.volume * 1.24;
 
-                if (printTime is float) {
+                if printTime is float {
+                    os:Process exec = check os:exec(
+                            {
+                                value: "python",
+                                arguments: ["python_predictor/predictor.py", "--weight", weight.toString(), "--time", (printTime/60).toString()]
+                            }
+                    );
+                    log:printInfo("Python process started");
+                    int status = check exec.waitForExit();
+                    io:println("Process exited with status code: " + status.toString());
+                    byte[] output = check exec.output(io:stdout);
+                    string outputString = check string:fromBytes(output);
+                    string[] values = regex:split(outputString, "\r\n");
+
                     json response = {
-                        "weight": result.volume*1.24,
-                        "printTime": printTime / 60
+                        "weight": check decimal:fromString(values[0]),
+                        "time": check decimal:fromString(values[1])
                     };
                     return response;
-                } else {
-                    return error("Weight calculation failed: ");
-                
-            }
-        }
+                }
+                else {
+                    return error("Print time estimation failed: " + printTime.toString());
+                }
 
-        return error("No file found in the request");
-    }
+            }
+
+            return error("No file found in the request");
         }
+    }
 
     // resource function post estimate(@http:Payload json jsonObj) returns json|error {
     //     string url = check jsonObj.url;
@@ -270,7 +290,6 @@ service / on new http:Listener(9090) {
             return error("Quotation generation failed: " + quotation.toString());
         }
 
-        
     }
 
     resource function post sendToSheet(http:Request req) returns error? {
@@ -318,5 +337,33 @@ service / on new http:Listener(9090) {
             log:printInfo("Order added successfully");
             return;
         }
+    }
+
+    resource function post getActualData(http:Request req) returns json|error {
+        map<json> jsonObj = check req.getJsonPayload().ensureType();
+        float weight = check jsonObj.get("weight").ensureType();
+        float printTime = check jsonObj.get("printTime").ensureType();
+
+        os:Process exec = check os:exec(
+                {
+                    value: "python",
+                    arguments: ["python_predictor/predictor.py", "--weight", weight.toString(), "--time", printTime.toString()]
+                }
+        );
+
+        int status = check exec.waitForExit();
+        io:println("Process exited with status code: " + status.toString());
+
+        byte[] output = check exec.output(io:stdout);
+        io:println(check string:fromBytes(output));
+
+        string outputString = check string:fromBytes(output);
+        string[] values = regex:split(outputString, "\r\n");
+
+        json response = {
+            "predictedWeight": check decimal:fromString(values[0]),
+            "predictedTime": check decimal:fromString(values[1])
+        };
+        return response;
     }
 }
