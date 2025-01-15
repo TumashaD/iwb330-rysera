@@ -10,16 +10,31 @@ interface STLViewerProps {
 const STLViewer: React.FC<STLViewerProps> = ({ file }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+
+  const handleResize = () => {
+    if (!mountRef.current || !rendererRef.current || !cameraRef.current) return;
+
+    const width = mountRef.current.clientWidth;
+    const height = mountRef.current.clientHeight;
+
+    rendererRef.current.setSize(width, height);
+    cameraRef.current.aspect = width / height;
+    cameraRef.current.updateProjectionMatrix();
+  };
 
   useEffect(() => {
-    if (!file) return;
+    if (!file || !mountRef.current) return;
 
-    const width = mountRef.current?.clientWidth || 0;
-    const height = mountRef.current?.clientHeight || 0;
+    const width = mountRef.current.clientWidth;
+    const height = mountRef.current.clientHeight;
 
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
+    cameraRef.current = camera;
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     rendererRef.current = renderer;
 
     renderer.setSize(width, height);
@@ -64,17 +79,34 @@ const STLViewer: React.FC<STLViewerProps> = ({ file }) => {
       animate();
     });
 
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+
     return () => {
-      // Clean up the WebGL context
+      window.removeEventListener('resize', handleResize);
       renderer.dispose();
       rendererRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
       if (mountRef.current) {
         mountRef.current.removeChild(renderer.domElement);
       }
     };
   }, [file]);
 
-  return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
+  // Add resize observer for container size changes
+  useEffect(() => {
+    if (!mountRef.current) return;
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(mountRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return <div ref={mountRef} className="w-11/12 lg:w-full h-[50vh] lg:h-full" />;
 };
 
 export default STLViewer;

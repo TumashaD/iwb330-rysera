@@ -11,7 +11,7 @@ interface EstimatedValuesCardProps {
 
 export function EstimatedValuesCard({ estimatedPrice, printDuration, materialWeight , loadTime }: EstimatedValuesCardProps) {
   return (
-    <Card className="w-[300px] mb-4">
+    <Card className="w-[80vw] lg:w-[315px] mb-4">
       <CardHeader>
         <CardTitle>Estimated Values</CardTitle>
         <p className="text-sm text-muted-foreground">Generated in {loadTime} s</p>

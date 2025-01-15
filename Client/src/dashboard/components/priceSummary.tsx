@@ -89,7 +89,7 @@ const PriceSummary = ({ fileStates, estimatedValues }: PriceSummaryProps) => {
   };
 
   return (
-    <div className="w-[270px]">
+    <div className="w-[80vw] lg:w-[24vw]">
       <Card className="flex flex-col flex-grow">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Price Summary</CardTitle>
@@ -103,13 +103,15 @@ const PriceSummary = ({ fileStates, estimatedValues }: PriceSummaryProps) => {
               >
                 {estimatedValues[index] && (
                   <>
+                  <div className="flex items-center gap-2 truncate">
                     <Quantity
                       value={quantities[index]}
                       onChange={(value) => handleQuantityChange(index, value)}
                     />
-                    <span className="text-sm truncate max-w-[140px]">
+                    <span className="text-sm ">
                       {fileState.file.name.replace(/\.STL$/i, "")}
                     </span>
+                    </div>
                     <span className="text-sm font-medium">
                       Rs.{estimatedValues[index].price.toFixed(2)}
                     </span>

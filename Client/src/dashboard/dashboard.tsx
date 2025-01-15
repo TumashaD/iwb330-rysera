@@ -257,8 +257,51 @@ export default function Dashboard() {
             )
           }
         >
+          {fileStates[currentFileIndex] && (
+            <div className="lg:hidden place-self-center mt-2">
+            <Estimator
+                  unit="mm"
+                  fileState={fileStates[currentFileIndex]}
+                  estimatedValues={estimatedValues[currentFileIndex]}
+                  loadTime={loadTimes[currentFileIndex]}
+                  onEstimateStart={() => {
+                    setFileStates((prevStates) => {
+                      const newStates = [...prevStates];
+                      newStates[currentFileIndex] = {
+                        ...newStates[currentFileIndex],
+                        isEstimating: true,
+                      };
+                      return newStates;
+                    });
+                    handleEstimateStart(currentFileIndex);
+                  }}
+                  onEstimateComplete={(price, time, weight) => {
+                    setFileStates((prevStates) => {
+                      const newStates = [...prevStates];
+                      newStates[currentFileIndex] = {
+                        ...newStates[currentFileIndex],
+                        isEstimating: false,
+                        initialPrice: price,
+                      };
+                      return newStates;
+                    });
+                    handleEstimateComplete(
+                      currentFileIndex,
+                      price,
+                      time,
+                      weight
+                    );
+                  }}
+                  onLoadTime={(loadTime) =>
+                    handleLoadTime(currentFileIndex, loadTime)
+                  }
+                      />
+                      </div>
+                )}
+          
+
           {fileStates.length > 0 && (
-            <div className="flex-grow">
+            <div className="flex-grow place-self-center">
               {" "}
               {/* Allow PriceSummary to grow and take full height */}
               <PriceSummary
@@ -287,14 +330,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex gap-4 h-[80vh]">
+    <div className="flex gap-4 lg:h-[80vh] flex-row flex-wrap justify-center">
       {/* Material Info Card */}
-      {renderMaterialCard()}
 
       {/* Main Content Area */}
       <div className="flex flex-row flex-grow flex-wrap justify-center lg:flex-nowrap">
+      {renderMaterialCard()}
         <div
-          className="flex flex-col items-center justify-center w-full col-span-1 border rounded-lg relative"
+          className="flex flex-col items-center justify-center lg:w-[45vw] w-11/12 col-span-1 border rounded-lg relative"
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -331,7 +374,7 @@ export default function Dashboard() {
               {renderFileContent()}
 
               {/* Estimator */}
-              <div className="absolute bottom-16">
+              <div className="absolute bottom-16 hidden lg:block">
                 <Estimator
                   unit="mm"
                   fileState={fileStates[currentFileIndex]}

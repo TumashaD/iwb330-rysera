@@ -10,7 +10,7 @@ export function MaterialCard({ material, materialImages }: MaterialCardProps) {
   if (!material) return null;
 
   return (
-    <Card className="p-6 w-64 hidden lg:block">
+    <Card className="p-6 w-[20vw] hidden lg:block mr-6">
       <div className="mb-2">
       <img
         src={materialImages[material.name]}
