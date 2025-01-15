@@ -24,17 +24,21 @@ export const uploadFile = async (
 
 //   Get price estimation
 export const getEstimate = async (
-  url: string,
-  weight: number
+  file: File,
 ): Promise<EstimateResponse> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
   try {
-    const response = await api.post<EstimateResponse>("/estimate", {
-      url,
-      weight,
+    const response = await api.post<EstimateResponse>("/estimate", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     });
     return response.data;
   } catch (error) {
-    console.error("Estimate failed", error);
+    console.error("Upload failed", error);
     throw error;
   }
 };
+

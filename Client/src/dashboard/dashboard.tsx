@@ -98,20 +98,11 @@ export default function Dashboard() {
       const newFiles = Array.from(event.target.files);
       const newFileStates: FileState[] = newFiles.map((file) => ({
         file,
-        status: "idle",
-        uploadProgress: 0,
+        status: "idle", 
         ...defaultSettings,
       }));
 
-      setFileStates((prevStates) => {
-        const updatedStates = [...prevStates, ...newFileStates];
-        // Start uploading each new file after state update
-        newFileStates.forEach((_, index) => {
-          upload(prevStates.length + index, updatedStates);
-        });
-        return updatedStates;
-      });
-
+      setFileStates((prevStates) => [...prevStates, ...newFileStates]);
       setCurrentFileIndex(fileStates.length);
     }
   };
@@ -179,36 +170,7 @@ export default function Dashboard() {
 
   const renderFileContent = () => {
     const currentFile = fileStates[currentFileIndex];
-
-    if (currentFile.status === "uploading") {
-      return (
-        <div className="w-full h-full flex flex-col items-center justify-center">
-          <p className="mt-4">
-            Uploading: {currentFile.uploadProgress.toFixed(0)}%
-          </p>
-        </div>
-      );
-    }
-
-    if (currentFile.status === "uploaded") {
-      return <STLViewer file={currentFile.file} />;
-    }
-
-    if (currentFile.status === "error") {
-      return (
-        <div className="w-full h-full flex flex-col items-center justify-center">
-          <p className="text-red-500">
-            Error uploading file. Please try again.
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center">
-        <p>Preparing your file...</p>
-      </div>
-    );
+    return <STLViewer file={currentFile.file} />;
   };
 
   const handleSettingsChange = (
@@ -406,8 +368,6 @@ export default function Dashboard() {
                   onLoadTime={(loadTime) =>
                     handleLoadTime(currentFileIndex, loadTime)
                   }
-                  uploadedUrl={fileStates[currentFileIndex].url || ""}
-                  uploadedVolume={fileStates[currentFileIndex].volume || 0}
                 />
               </div>
 

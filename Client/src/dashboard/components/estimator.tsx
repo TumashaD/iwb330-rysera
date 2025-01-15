@@ -13,8 +13,6 @@ const Estimator: React.FC<EstimatorProps> = ({
   onEstimateStart,
   onEstimateComplete,
   onLoadTime,
-  uploadedUrl,
-  uploadedVolume,
 }) => {
   const [error, setError] = useState<string | null>(null);
   const status = fileState.status;
@@ -31,14 +29,7 @@ const Estimator: React.FC<EstimatorProps> = ({
     const startTime = performance.now();
 
     try {
-      if (unit === "mm") {
-        uploadedVolume = uploadedVolume / 1000;
-      }
-      const weight = uploadedVolume * 1.25;
-      const estimateResult = await getEstimate(uploadedUrl, weight);
-      if (estimateResult.time === "0") {
-        estimateResult.time = "TBD";
-      }
+      const estimateResult = await getEstimate(fileState.file);
 
       if (fileState.quality === "high") {
         estimateResult.price = estimateResult.price * 1.3;
@@ -49,7 +40,7 @@ const Estimator: React.FC<EstimatorProps> = ({
           estimateResult.price * (1 + (fileState.infill / 80 - 0.25));
       }
 
-      onEstimateComplete?.(estimateResult.price, estimateResult.time, weight);
+      onEstimateComplete?.(estimateResult.price, estimateResult.time.toString(), estimateResult.weight);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -67,7 +58,7 @@ const Estimator: React.FC<EstimatorProps> = ({
           size="lg"
           className="mb-6"
           onClick={handleEstimate}
-          disabled={status !== "uploaded"}
+          disabled={status !== "idle"}
         >
           Estimate Price
         </Button>

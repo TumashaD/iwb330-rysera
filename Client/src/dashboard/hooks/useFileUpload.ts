@@ -35,8 +35,6 @@ export function useFileUpload() {
         newStates[index] = {
           ...newStates[index],
           status: "uploaded",
-          url: result.url,
-          volume: result.volume,
         };
         return newStates; // Return the updated states
       });

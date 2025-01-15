@@ -208,10 +208,14 @@ service / on new http:Listener(9090) {
                     byte[] output = check exec.output(io:stdout);
                     string outputString = check string:fromBytes(output);
                     string[] values = regex:split(outputString, "\r\n");
+                    float predictedWeight = check float:fromString(values[0]);
+                    float predictedTime = check float:fromString(values[1]);
+                    float price = predictedWeight * 6 + predictedTime * 0.69;
 
                     json response = {
-                        "weight": check decimal:fromString(values[0]),
-                        "time": check decimal:fromString(values[1])
+                        "weight": predictedWeight,
+                        "time": predictedTime,
+                        "price": price
                     };
                     return response;
                 }

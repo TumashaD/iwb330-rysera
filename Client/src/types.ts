@@ -27,9 +27,10 @@ export interface Order {
 export interface FileState {
   file: File;
   status: "idle" | "uploading" | "uploaded" | "error" | "estimated";
-  uploadProgress: number;
+  uploadProgress?: number;
   url?: string;
-  volume?: number;
+  weight?: number;
+  time?: string;
   isEstimating?: boolean;
   material?: Material;
   quality?: "normal" | "high";
@@ -64,13 +65,12 @@ export interface EstimatorProps {
   onEstimateStart?: () => void;
   onEstimateComplete?: (price: number, time: string, weight: number) => void;
   onLoadTime?: (loadTime: string) => void;
-  uploadedUrl: string;
-  uploadedVolume: number;
 }
 
 export interface EstimateResponse {
+  weight: number;
+  time: number;
   price: number;
-  time: string;
 }
 
 export interface UploadResponse {
