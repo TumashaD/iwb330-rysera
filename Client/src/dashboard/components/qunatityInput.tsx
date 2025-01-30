@@ -52,7 +52,7 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
         className={`
           p-0 text-gray-600 hover:text-gray-900
           disabled:opacity-50 disabled:cursor-not-allowed
-          transition-colors duration-200
+          transition-colors duration-200 bg-gray-200
         `}
         aria-label="Decrease quantity"
       >
@@ -84,7 +84,7 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
         className={`
           p-0 text-gray-600 hover:text-gray-900
           disabled:opacity-50 disabled:cursor-not-allowed
-          transition-colors duration-200
+          transition-colors duration-200 bg-gray-200
         `}
         aria-label="Increase quantity"
       >

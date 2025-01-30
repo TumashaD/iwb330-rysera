@@ -207,10 +207,12 @@ service / on new http:Listener(9090) {
                     io:println("Process exited with status code: " + status.toString());
                     byte[] output = check exec.output(io:stdout);
                     string outputString = check string:fromBytes(output);
-                    string[] values = regex:split(outputString, "\r\n");
+                    log:printInfo(outputString);
+                    string[] values = regex:split(outputString, "\n");
+                    log:printInfo(values.toString());
                     float predictedWeight = check float:fromString(values[0]);
                     float predictedTime = check float:fromString(values[1]);
-                    float price = predictedWeight * 6 + predictedTime * 0.69;
+                    float price = (predictedWeight * 6 + predictedTime * 0.69)*3;
 
                     json response = {
                         "weight": predictedWeight,
