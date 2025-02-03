@@ -7,6 +7,7 @@ import { Order } from "@/types";
 import { useState, useEffect } from "react";
 import { ConfirmAlert } from "./confirmOrder";
 import Quantity from "../components/qunatityInput";
+import { useFileUpload } from "../hooks/useFileUpload";
 
 interface PriceSummaryProps {
   fileStates: Array<{
@@ -25,6 +26,7 @@ interface PriceSummaryProps {
 
 const PriceSummary = ({ fileStates, estimatedValues }: PriceSummaryProps) => {
   const { user, orders, setOrders } = UseUser();
+  const { upload } = useFileUpload();
   const navigate = useNavigate();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [quantities, setQuantities] = useState<number[]>(

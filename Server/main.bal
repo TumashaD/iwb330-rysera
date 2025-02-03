@@ -11,6 +11,7 @@ import ballerina/log;
 import ballerina/mime;
 import ballerina/os;
 import ballerina/regex;
+import ballerinax/googleapis.drive;
 
 // import ballerinax/googleapis.drive;
 
@@ -103,47 +104,35 @@ service / on new http:Listener(9090) {
         }
     }
 
-    // resource function post upload(http:Request request) returns json|error {
-    //     log:printInfo("File upload request received");
-    //     // Extract the file from multipart request
-    //     mime:Entity[] bodyParts = check request.getBodyParts();
-    //     foreach var part in bodyParts {
-    //         if part.getContentDisposition().name == "file" {
-    //             // Get file details
-    //             string fileName = part.getContentDisposition().fileName;
-    //             if fileName == "" {
-    //                 fileName = "uploaded-file";
-    //             }
-    //             byte[] fileContent = check part.getByteArray();
+    resource function post upload(http:Request request) returns json|error {
+        log:printInfo("File upload request received");
+        // Extract the file from multipart request
+        mime:Entity[] bodyParts = check request.getBodyParts();
+        foreach var part in bodyParts {
+            if part.getContentDisposition().name == "file" {
+                // Get file details
+                string fileName = part.getContentDisposition().fileName;
+                if fileName == "" {
+                    fileName = "uploaded-file";
+                }
+                byte[] fileContent = check part.getByteArray();
 
-    //             // Upload the file to Google Drive
-    //             drive:File|error uploadedFileResult = googleDriveService.uploadFile(fileContent, fileName, "1-DDCsqJJRTkBOvzDvTX-qHhYOI-Bpf6n");
+                // Upload the file to Google Drive
+                drive:File|error uploadedFileResult = googleDriveService.uploadFile(fileContent, fileName, "1-DDCsqJJRTkBOvzDvTX-qHhYOI-Bpf6n");
 
-    //             // Calculate the volume of the file
-    //             float|error volume = volume_calculator.parseSTL(fileContent);
-
-    //             if uploadedFileResult is drive:File {
-    //                 if volume is float {
-    //                     log:printInfo("Volume calculated successfully: " + volume.toString());
-    //                     string fileID = uploadedFileResult.id.toString();
-    //                     string url = string `https://drive.usercontent.google.com/download?id=${fileID}&confirm=xxx`;
-    //                     json response = {
-    //                         "url": url,
-    //                         "volume": volume
-    //                     };
-    //                     return response;
-    //                 } else {
-    //                     return error("Volume calculation failed: " + volume.toString());
-    //                 }
-    //             } else {
-    //                 return error("File upload failed: " + uploadedFileResult.toString());
-    //             }
-
-    //         }
-    //     }
-
-    //     return error("No file found in the request");
-    // }
+                if uploadedFileResult is drive:File {
+                        string fileID = uploadedFileResult.id.toString();
+                        string url = string `https://drive.usercontent.google.com/download?id=${fileID}&confirm=xxx`;
+                        json response = {
+                            "url": url
+                        };
+                        return response;
+                    }
+                    return error("File upload failed: " + uploadedFileResult.toString());
+                }
+            }
+        return error("No file found in the request");
+    }
 
     resource function post setOrders(@http:Query string jwt, db:Order[] newOrders) returns json|http:Unauthorized|error {
         json|http:Unauthorized|error result = googleService.decodeGoogleJWT(jwt);
